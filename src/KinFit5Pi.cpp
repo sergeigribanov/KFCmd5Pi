@@ -88,18 +88,6 @@ void KinFit5Pi::fill_fit5pi(KFCmd::Hypo4ChPions2Photons* hypo, std::size_t iph, 
   kf_terecoil = kf_tm_recoil.E();
   kf_tm2recoil = kf_tm_recoil.M2();
   in_mgg = hypo->getInitialMomentum(_permPhotons).M();
-  // auto qq = hypo->getFinalMomentum(_permPhotons);
-  // if (qq.M() < 0) {
-  //   std::cout << "[!] m2 gg < 0" << std::endl;
-  //   std::cout << "kf_mgg2 = " << qq.M2() << std::endl;
-  //   std::cout << "kf P gg: " << std::endl;
-  //   qq.Print();
-  //   std::cout << "kf P g0: " << std::endl;
-  //   hypo->getFinalMomentum("g0").Print();
-  //   std::cout << "kf P g1: " << std::endl;
-  //   hypo->getFinalMomentum("g1").Print();
-  //   std::cout << "___________" << std::endl;
-  // }
   kf_mgg = hypo->getFinalMomentum(_permPhotons).M();
   TVector3 ivertex;
   TVector3 fvertex;
