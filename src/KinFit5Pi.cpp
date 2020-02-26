@@ -9,6 +9,7 @@ const std::vector<std::string> KinFit5Pi::_seqTracks = {"pi-_0", "pi-_1", "pi+_0
 const std::vector<std::string> KinFit5Pi::_seqPhotons = {"g0", "g1"};
 const std::set<std::string> KinFit5Pi::_permPhotons = {"g0", "g1"};
 const std::set<std::string> KinFit5Pi::_permTracks = {"pi-_0", "pi-_1", "pi+_0", "pi+_1"};
+const std::set<std::string> KinFit5Pi::_permAll = {"pi-_0", "pi-_1", "pi+_0", "pi+_1", "g0", "g1"};
 const std::vector<std::set<std::string>> KinFit5Pi::_perm3Pi =
   {{"pi-_0", "pi+_0", "g0", "g1"},
    {"pi-_0", "pi+_1", "g0", "g1"},
@@ -87,6 +88,18 @@ void KinFit5Pi::fill_fit5pi(KFCmd::Hypo4ChPions2Photons* hypo, std::size_t iph, 
   kf_terecoil = kf_tm_recoil.E();
   kf_tm2recoil = kf_tm_recoil.M2();
   in_mgg = hypo->getInitialMomentum(_permPhotons).M();
+  // auto qq = hypo->getFinalMomentum(_permPhotons);
+  // if (qq.M() < 0) {
+  //   std::cout << "[!] m2 gg < 0" << std::endl;
+  //   std::cout << "kf_mgg2 = " << qq.M2() << std::endl;
+  //   std::cout << "kf P gg: " << std::endl;
+  //   qq.Print();
+  //   std::cout << "kf P g0: " << std::endl;
+  //   hypo->getFinalMomentum("g0").Print();
+  //   std::cout << "kf P g1: " << std::endl;
+  //   hypo->getFinalMomentum("g1").Print();
+  //   std::cout << "___________" << std::endl;
+  // }
   kf_mgg = hypo->getFinalMomentum(_permPhotons).M();
   TVector3 ivertex;
   TVector3 fvertex;
@@ -146,6 +159,18 @@ void KinFit5Pi::fill_fit5pi(KFCmd::Hypo4ChPions2Photons* hypo, std::size_t iph, 
   t_momenta.push_back(cfv_piPl1);
   t_momenta.push_back(cfv_pi0);
   ph_space_wt = phase_space_weight(t_momenta);
+
+  TLorentzVector in_total_dmomentum = hypo->getInitialMomentum(_permAll);
+  in_total_de = in_total_dmomentum.E() - 2 * emeas;
+  in_total_px = in_total_dmomentum.X();
+  in_total_py = in_total_dmomentum.Y();
+  in_total_pz = in_total_dmomentum.Z();
+
+  TLorentzVector kf_total_dmomentum = hypo->getFinalMomentum(_permAll);
+  kf_total_de = kf_total_dmomentum.E() - 2 * emeas;
+  kf_total_px = kf_total_dmomentum.X();
+  kf_total_py = kf_total_dmomentum.Y();
+  kf_total_pz = kf_total_dmomentum.Z();
 }
 
 bool KinFit5Pi::fit5pi(KFCmd::Hypo4ChPions2Photons* hypo) {
@@ -175,7 +200,13 @@ void KinFit5Pi::fill_fit5pi_mpi0(KFCmd::Hypo4ChPions2Photons* hypo) {
   kf_chi2t_5pi_mpi0 = hypo->getChiSquare(_permTracks);
   for (int i = 0; i < 4; ++i) {
     kf_mpi0_m3pi[i] = hypo->getFinalMomentum(_perm3Pi[i]).M();
+    TLorentzVector tfmomentum = hypo->getFinalMomentum(_seqTracks[i]);
+    kf_mpi0_tth[i] = tfmomentum.Theta();
+    kf_mpi0_tphi[i] = tfmomentum.Phi();
   }
+  kf_mpi0_mgg_dbl = hypo->getFinalMomentum(_permPhotons).M();
+  kf_mpi0_mgg2_dbl = hypo->getFinalMomentum(_permPhotons).M2();
+  kf_mpi0_mgg = hypo->getFinalMomentum(_permPhotons).M();
 }
 
 void KinFit5Pi::fit5pi_mpi0(KFCmd::Hypo4ChPions2Photons* hypo) {
@@ -228,8 +259,66 @@ void KinFit5Pi::Loop(const std::string& outpath, double mfield) {
     if (!cut()) continue;
     clean();
     hypo5pi.setBeamXY(xbeam, ybeam);
+    hypo5pi.fixVertexComponent("vtx0", xbeam, KFBase::VERTEX_X);
+    hypo5pi.fixVertexComponent("vtx0", ybeam, KFBase::VERTEX_Y);
+
+    // hypo5pi.disableVertexConstraintX("pi-_0");
+    // hypo5pi.disableVertexConstraintX("pi-_1");
+    // hypo5pi.disableVertexConstraintX("pi+_0");
+    // hypo5pi.disableVertexConstraintX("pi+_1");
+
+    // hypo5pi.disableVertexConstraintY("pi-_0");
+    // hypo5pi.disableVertexConstraintY("pi-_1");
+    // hypo5pi.disableVertexConstraintY("pi+_0");
+    // hypo5pi.disableVertexConstraintY("pi+_1");
+    
+    
+    // hypo5pi.fixVertexComponent("vtx0", z0, KFBase::VERTEX_Z);
+    // hypo5pi.disableVertexConstraintXYZ("pi-_0");
+    // hypo5pi.disableVertexConstraintXYZ("pi-_1");
+    // hypo5pi.disableVertexConstraintXYZ("pi+_0");
+    // hypo5pi.disableVertexConstraintXYZ("pi+_1");
+        
     hypo5pi_mpi0.setBeamXY(xbeam, ybeam);
+    hypo5pi_mpi0.fixVertexComponent("vtx0", xbeam, KFBase::VERTEX_X);
+    hypo5pi_mpi0.fixVertexComponent("vtx0", ybeam, KFBase::VERTEX_Y);
+
+    // hypo5pi_mpi0.disableVertexConstraintX("pi-_0");
+    // hypo5pi_mpi0.disableVertexConstraintX("pi-_1");
+    // hypo5pi_mpi0.disableVertexConstraintX("pi+_0");
+    // hypo5pi_mpi0.disableVertexConstraintX("pi+_1");
+
+    // hypo5pi_mpi0.disableVertexConstraintY("pi-_0");
+    // hypo5pi_mpi0.disableVertexConstraintY("pi-_1");
+    // hypo5pi_mpi0.disableVertexConstraintY("pi+_0");
+    // hypo5pi_mpi0.disableVertexConstraintY("pi+_1");
+    
+    // hypo5pi_mpi0.fixVertexComponent("vtx0", z0, KFBase::VERTEX_Z);
+    // hypo5pi_mpi0.disableVertexConstraintXYZ("pi-_0");
+    // hypo5pi_mpi0.disableVertexConstraintXYZ("pi-_1");
+    // hypo5pi_mpi0.disableVertexConstraintXYZ("pi+_0");
+    // hypo5pi_mpi0.disableVertexConstraintXYZ("pi+_1");
+
     hypo4pi.setBeamXY(xbeam, ybeam);
+    hypo4pi.fixVertexComponent("vtx0", xbeam, KFBase::VERTEX_X);
+    hypo4pi.fixVertexComponent("vtx0", ybeam, KFBase::VERTEX_Y);
+
+    // hypo4pi.disableVertexConstraintX("pi-_0");
+    // hypo4pi.disableVertexConstraintX("pi-_1");
+    // hypo4pi.disableVertexConstraintX("pi+_0");
+    // hypo4pi.disableVertexConstraintX("pi+_1");
+
+    // hypo4pi.disableVertexConstraintY("pi-_0");
+    // hypo4pi.disableVertexConstraintY("pi-_1");
+    // hypo4pi.disableVertexConstraintY("pi+_0");
+    // hypo4pi.disableVertexConstraintY("pi+_1");
+    
+    // hypo4pi.fixVertexComponent("vtx0", z0, KFBase::VERTEX_Z);
+    // hypo4pi.disableVertexConstraintXYZ("pi-_0");
+    // hypo4pi.disableVertexConstraintXYZ("pi-_1");
+    // hypo4pi.disableVertexConstraintXYZ("pi+_0");
+    // hypo4pi.disableVertexConstraintXYZ("pi+_1");
+    
     if (!fit5pi(&hypo5pi)) continue;
     npassed++;
     fit5pi_mpi0(&hypo5pi_mpi0);
@@ -246,6 +335,16 @@ void KinFit5Pi::Loop(const std::string& outpath, double mfield) {
 }
 
 void KinFit5Pi::clean() {
+  in_total_de = std::numeric_limits<float>::infinity();
+  in_total_px = std::numeric_limits<float>::infinity();
+  in_total_py = std::numeric_limits<float>::infinity();
+  in_total_pz = std::numeric_limits<float>::infinity();
+  
+  kf_total_de = std::numeric_limits<float>::infinity();
+  kf_total_px = std::numeric_limits<float>::infinity();
+  kf_total_py = std::numeric_limits<float>::infinity();
+  kf_total_pz = std::numeric_limits<float>::infinity();
+
   ph_space_wt = 0;
   mel2_omegapipi = 0;
   std::fill(tind, tind + 4, 0);
@@ -268,6 +367,9 @@ void KinFit5Pi::clean() {
   kf_err_4pi = 1;
   in_mgg = 0;
   kf_mgg = 0;
+  kf_mpi0_mgg = 0;
+  kf_mpi0_mgg_dbl = 0;
+  kf_mpi0_mgg2_dbl = 0;
   std::fill(in_m3pi, in_m3pi + 4, 0);
   std::fill(kf_m3pi, kf_m3pi + 4, 0);
   std::fill(kf_mpi0_m3pi, kf_mpi0_m3pi + 4, 0);
@@ -287,7 +389,11 @@ void KinFit5Pi::clean() {
   kf_vy = 0;
   kf_vz = 0;
   std::fill(kf_tth, kf_tth + 4, 0);
+  std::fill(kf_mpi0_tth, kf_mpi0_tth + 4, 0);
+  
   std::fill(kf_tphi, kf_tphi + 4, 0);
+  std::fill(kf_mpi0_tphi, kf_mpi0_tphi + 4, 0);
+  
   std::fill(kf_tetot, kf_tetot + 4, 0);
   std::fill(kf_tptot, kf_tptot + 4, 0);
   std::fill(in_phth, in_phth + 2, 0);
@@ -335,6 +441,16 @@ int KinFit5Pi::getStatus() const {
 }
 
 void KinFit5Pi::setupOutptuBranches(TTree* tree) {
+  tree->Branch("in_total_de", &in_total_de, "in_total_de/F");
+  tree->Branch("in_total_px", &in_total_px, "in_total_px/F");
+  tree->Branch("in_total_py", &in_total_py, "in_total_py/F");
+  tree->Branch("in_total_pz", &in_total_pz, "in_total_pz/F");
+  
+  tree->Branch("kf_total_de", &kf_total_de, "kf_total_de/F");
+  tree->Branch("kf_total_px", &kf_total_px, "kf_total_px/F");
+  tree->Branch("kf_total_py", &kf_total_py, "kf_total_py/F");
+  tree->Branch("kf_total_pz", &kf_total_pz, "kf_total_pz/F");
+  
   tree->Branch("in_vx", &in_vx, "in_vx/F");
   tree->Branch("in_vy", &in_vy, "in_vy/F");
   tree->Branch("in_vz", &in_vz, "in_vz/F");
@@ -349,8 +465,12 @@ void KinFit5Pi::setupOutptuBranches(TTree* tree) {
   tree->Branch("kf_vy", &kf_vy, "kf_vy/F");
   tree->Branch("kf_vz", &kf_vz, "kf_vz/F");
   tree->Branch("kf_tth", kf_tth, "kf_tth[4]/F");
+  tree->Branch("kf_mpi0_tth", kf_mpi0_tth, "kf_mpi0_tth[4]/F");
+ 
   tree->Branch("kf_tetot", kf_tetot, "kf_tetot[4]/F");
   tree->Branch("kf_tphi", kf_tphi, "kf_tphi[4]/F");
+  tree->Branch("kf_mpi0_tphi", kf_mpi0_tphi, "kf_mpi0_tphi[4]/F");
+  
   tree->Branch("kf_tptot", kf_tptot, "kf_tptot[4]/F");
   tree->Branch("in_phth", in_phth, "in_phth[2]/F");
   tree->Branch("in_phphi", in_phphi, "in_phphi[2]/F");
@@ -381,6 +501,11 @@ void KinFit5Pi::setupOutptuBranches(TTree* tree) {
   tree->Branch("kf_err_4pi", &kf_err_4pi, "kf_err_4pi/I");
   tree->Branch("in_mgg", &in_mgg, "in_mgg/F");
   tree->Branch("kf_mgg", &kf_mgg, "kf_mgg/F");
+
+  tree->Branch("kf_mpi0_mgg", &kf_mpi0_mgg, "kf_mpi0_mgg/F");
+  tree->Branch("kf_mpi0_mgg_dbl", &kf_mpi0_mgg_dbl, "kf_mpi0_mgg_dbl/D");
+  tree->Branch("kf_mpi0_mgg2_dbl", &kf_mpi0_mgg2_dbl, "kf_mpi0_mgg2_dbl/D");
+  
   tree->Branch("in_m3pi", in_m3pi, "in_m3pi[4]/F");
   tree->Branch("kf_m3pi", kf_m3pi, "kf_m3pi[4]/F");
   tree->Branch("kf_mpi0_m3pi", kf_mpi0_m3pi, "kf_mpi0_m3pi[4]/F");

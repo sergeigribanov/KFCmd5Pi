@@ -33,6 +33,7 @@ private:
   static const std::vector<std::string> _seqPhotons;
   static const std::set<std::string> _permPhotons;
   static const std::set<std::string> _permTracks;
+  static const std::set<std::string> _permAll;
   static const std::vector<std::set<std::string>> _perm3Pi;
   static const std::vector<std::set<std::string>> _permPiPlPiMi;
   int _status;
@@ -87,12 +88,30 @@ private:
   float kf_tetot[4];
   float kf_tptot[4];
 
+  float kf_mpi0_tth[4];
+  float kf_mpi0_tphi[4];
+
   float in_phth[2];
   float in_phphi[2];
   float in_phen[2];
   float kf_phth[2];
   float kf_phphi[2];
   float kf_phen[2];
+
+  float in_total_de;
+  float in_total_px;
+  float in_total_py;
+  float in_total_pz;
+
+  float kf_total_de;
+  float kf_total_px;
+  float kf_total_py;
+  float kf_total_pz;
+
+  float kf_mpi0_mgg;
+  double kf_mpi0_mgg_dbl;
+  double kf_mpi0_mgg2_dbl;
+
 };
 
 #endif
